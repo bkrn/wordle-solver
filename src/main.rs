@@ -346,8 +346,8 @@ fn test_perf(limit: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
         let g = guesses.clone();
         std::thread::spawn(move || {
             let mapping = Mapping::create_with_guesses(limit, g);
-            loop {
-                s.send(mapping.clone()).unwrap();
+            while s.send(mapping.clone()).is_ok() {
+                continue;
             }
         });
     }
@@ -396,7 +396,7 @@ fn run_perf_test(limit: bool, guesses: Option<Vec<usize>>) {
     let now = Instant::now();
     let results = test_perf(limit, guesses.unwrap_or_default());
     println!(
-        "{}",
+        "\n{}",
         results
             .iter()
             .map(|v| v.len() as f64)
