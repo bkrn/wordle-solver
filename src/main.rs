@@ -19,6 +19,8 @@ static OUTCOME_LEN: usize = 253;
 // are expected to perform better
 static LOG_E_REDUCTION: f64 = 1.36172783602f64;
 
+static CONCURRENCY: usize = 12;
+
 #[derive(Clone, Copy, Debug)]
 enum CellResult {
     B,
@@ -81,7 +83,7 @@ fn get_word_index(w: String) -> usize {
     let b = w.as_bytes();
     for ix in 0..WORD_COUNT {
         if b == get_word_bytes(ix) {
-            return ix
+            return ix;
         }
     }
     panic!("Word {} does not exist", w);
@@ -108,9 +110,10 @@ fn get_word_string(word_index: usize) -> String {
 }
 
 fn get_answer_string(word_index: usize) -> String {
-    str::from_utf8(&get_answer_bytes(word_index)).unwrap().into()
+    str::from_utf8(&get_answer_bytes(word_index))
+        .unwrap()
+        .into()
 }
-
 
 fn get_outcome(guess_index: usize, target_index: usize) -> WordResult {
     get_outcome_by_word(get_word_bytes(guess_index), get_word_bytes(target_index))
@@ -140,11 +143,10 @@ fn get_outcome_by_word(guess: [u8; 5], mut target: [u8; 5]) -> WordResult {
 struct Mapping {
     data: Vec<Vec<HashSet<u16>>>,
     available: HashSet<u16>,
-    forced_guesses: Vec<usize>
+    forced_guesses: Vec<usize>,
 }
 
 impl Mapping {
-
     fn get_answers(limit: bool) -> Vec<usize> {
         if limit {
             serde_json::from_slice(&ANSWER_INDEXES[..]).unwrap()
@@ -163,7 +165,11 @@ impl Mapping {
                 data[guess_ix][get_outcome(guess_ix, *target_ix).index()].insert(*target_ix as u16);
             }
         }
-        Self { data, available, forced_guesses: Vec::new() }
+        Self {
+            data,
+            available,
+            forced_guesses: Vec::new(),
+        }
     }
 
     fn create_with_guesses(limit: bool, guesses: Vec<usize>) -> Self {
@@ -176,9 +182,12 @@ impl Mapping {
                 data[guess_ix][get_outcome(guess_ix, *target_ix).index()].insert(*target_ix as u16);
             }
         }
-        Self { data, available, forced_guesses: guesses.into_iter().rev().collect() }
+        Self {
+            data,
+            available,
+            forced_guesses: guesses.into_iter().rev().collect(),
+        }
     }
-
 
     fn update(&mut self, word_ix: usize, result: WordResult) {
         self.available = self.data[word_ix][result.index()].clone();
@@ -316,11 +325,11 @@ fn update_timer(start: Instant, current: usize, total: usize, avg: f64) {
 }
 
 fn test_perf(limit: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
-    use rand::thread_rng;
     use rand::seq::SliceRandom;
+    use rand::thread_rng;
 
-    let solvers = 12;
-    let cloners = 4;
+    let solvers = CONCURRENCY;
+    let cloners = if solvers > 3 { solvers / 3 } else { 1 };
 
     let mut results: Vec<Vec<String>> = Vec::new();
     let mut have = 0;
@@ -391,8 +400,6 @@ fn test_perf(limit: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
 }
 
 fn run_perf_test(limit: bool, guesses: Option<Vec<usize>>) {
-    
-
     let now = Instant::now();
     let results = test_perf(limit, guesses.unwrap_or_default());
     println!(
