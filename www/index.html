@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Wordle Solver</title>
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+  </head>
+  <body>
+    <h1>Wordle Solver</h1>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+    <script type="module" src="./bootstrap.js"></script>
+    <form id="entry" hidden="true">
+      <input id="cheat" name="cheat" type="checkbox">
+      <label for="cheat">Cheat and limit to Wordle possible answers</label>
+      <input id="word" type="text" maxlength="5" minlength="5"/>
+      <button id="submit">Submit</button>
+      <div><span id="status">Submit word to solve</span></div>
+    </form>
+  </body>
+</html>
