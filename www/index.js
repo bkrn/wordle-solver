@@ -13,7 +13,7 @@ worker.onmessage = _ => {
         e.preventDefault();
         const args = {
             be_cheaty: document.getElementById("cheat").checked,
-            target: document.getElementById("word").value,
+            target: document.getElementById("word").value.toLowerCase(),
         };
         worker.postMessage(args);
         document.getElementById("status").innerText = "Working ... this could take a bit"
