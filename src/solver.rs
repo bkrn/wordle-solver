@@ -11,7 +11,6 @@ pub static WORD_LEN: usize = 5;
 // number of possible clues bbbbb, bbbby, ... == 3 ** 5
 static CLUE_COUNT: usize = 243;
 
-
 #[derive(Clone, Copy, Debug)]
 enum CluePart {
     B,
@@ -81,9 +80,9 @@ pub fn get_word_index(w: String) -> Option<usize> {
 }
 
 pub fn is_valid_word(be_cheaty: bool, w: String) -> bool {
-    get_word_index(w).map(|ix| {
-        get_answers(be_cheaty).contains(&ix)
-    }).unwrap_or_default()
+    get_word_index(w)
+        .map(|ix| get_answers(be_cheaty).contains(&ix))
+        .unwrap_or_default()
 }
 
 pub fn get_word_bytes(word_index: usize) -> [u8; 5] {
@@ -142,14 +141,15 @@ pub struct WordleSolver {
     pub possible_answers: HashSet<u16>,
     // Guesses that the solver will use first, set at creation
     forced_guesses: Vec<usize>,
+    hard_mode: bool,
 }
 
 impl WordleSolver {
-    pub fn create(be_cheaty: bool) -> Self {
-        Self::create_with_guesses(be_cheaty, Vec::new())
+    pub fn create(hard_mode: bool, be_cheaty: bool) -> Self {
+        Self::create_with_guesses(hard_mode, be_cheaty, Vec::new())
     }
 
-    pub fn create_with_guesses(be_cheaty: bool, guesses: Vec<usize>) -> Self {
+    pub fn create_with_guesses(hard_mode: bool, be_cheaty: bool, guesses: Vec<usize>) -> Self {
         let answers: Vec<usize> = get_answers(be_cheaty);
         let mut game_state = Vec::with_capacity(WORD_COUNT);
         let possible_answers = HashSet::from_iter(answers.iter().map(|u| *u as u16));
@@ -164,6 +164,7 @@ impl WordleSolver {
             game_state,
             possible_answers,
             forced_guesses: guesses.into_iter().rev().collect(),
+            hard_mode,
         }
     }
 
@@ -187,7 +188,7 @@ impl WordleSolver {
         for bucket in self.game_state[word].iter() {
             // probability of getting a particulkar clue is size of bucket / remaining possible answers
             let p_of_clue = bucket.len() as f64 / self.possible_answers.len() as f64;
-            // expected words eliminated by this clue is the proibability of notgetting it 
+            // expected words eliminated by this clue is the proibability of notgetting it
             // times the size of its bucket
             expected_words_eliminated += (1f64 - p_of_clue) * bucket.len() as f64;
         }
@@ -195,7 +196,6 @@ impl WordleSolver {
         // make sense after refactors
         let expected_words_remaining =
             self.possible_answers.len() as f64 - expected_words_eliminated;
-        
         // Settle ties for possibly correct guesses by
         // giving them a small bonus
         let is_possible_answer = self.possible_answers.contains(&(word as u16));
@@ -223,9 +223,14 @@ impl WordleSolver {
         }
 
         let mut current: (usize, f64) = (0usize, f64::INFINITY);
-        for word in 0..WORD_COUNT {
+        let itr: Vec<usize> = if self.hard_mode {
+            self.possible_answers.iter().map(|u| *u as usize).collect()
+        } else {
+            (0..WORD_COUNT).collect::<Vec<usize>>()
+        };
+        for word in itr {
             let score = self.get_score(word);
-            if score < current.1 {
+            if score <= current.1 {
                 current = (word, score);
             }
         }

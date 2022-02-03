@@ -25,25 +25,18 @@ fn solve_for_target(target_str: String, mut solver: WordleSolver) -> Vec<String>
 }
 
 
-fn run_solver_with_target(be_cheaty: bool, target_str: String) -> Option<Vec<String>> {
+fn run_solver_with_target(hard_mode: bool, be_cheaty: bool, target_str: String) -> Option<Vec<String>> {
     if is_valid_word(be_cheaty, target_str.clone()) {
         // We know these are the choices so save some time
-        let guesses = vec![
-            if be_cheaty {
-                get_word_index(String::from("roate")).unwrap()
-            } else {
-                get_word_index(String::from("lares")).unwrap()
-            }
-        ];
-        Some(solve_for_target(target_str, WordleSolver::create_with_guesses(be_cheaty, guesses)))
+        Some(solve_for_target(target_str, WordleSolver::create(hard_mode, be_cheaty)))
     } else {
         None
     }
 }
 
 #[wasm_bindgen]
-pub fn solve(be_cheaty: bool, target: String) -> JsValue {
-    if let Some(values) = run_solver_with_target(be_cheaty, target) {
+pub fn solve(hard_mode: bool, be_cheaty: bool, target: String) -> JsValue {
+    if let Some(values) = run_solver_with_target(hard_mode, be_cheaty, target) {
         JsValue::from(values.into_iter()
         .map(|x| JsValue::from_str(&x))
         .collect::<Array>())

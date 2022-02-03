@@ -10,8 +10,12 @@
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <script type="module" src="./bootstrap.js"></script>
     <form id="entry" hidden="true">
-      <input id="cheat" name="cheat" type="checkbox">
-      <label for="cheat">Cheat and limit to Wordle possible answers</label>
+      <input id="cheat" name="cheat" type="checkbox" title="limit to Wordle possible answers">
+      <label for="cheat">Cheat</label>
+      <br>
+      <input id="hard" name="hard" type="checkbox" title="require using the letters given by past clues">
+      <label for="hard">Hard</label>
+      <br>
       <input id="word" type="text" maxlength="5" minlength="5"/>
       <button id="submit">Submit</button>
       <div><span id="status">Submit word to solve</span></div>

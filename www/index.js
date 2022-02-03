@@ -13,6 +13,7 @@ worker.onmessage = _ => {
         e.preventDefault();
         const args = {
             be_cheaty: document.getElementById("cheat").checked,
+            hard_mode: document.getElementById("hard").checked,
             target: document.getElementById("word").value.toLowerCase(),
         };
         worker.postMessage(args);

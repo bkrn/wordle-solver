@@ -17,8 +17,8 @@ this is glue to the CLI not
 the solver side of the app
 *****************************/
 
-fn run_solver_with_target(be_cheaty: bool, target_str: String) -> Vec<String> {
-    solve_for_target(target_str, WordleSolver::create(be_cheaty))
+fn run_solver_with_target(hard_mode: bool, be_cheaty: bool, target_str: String) -> Vec<String> {
+    solve_for_target(target_str, WordleSolver::create(hard_mode, be_cheaty))
 }
 
 fn solve_for_target(target_str: String, mut solver: WordleSolver) -> Vec<String> {
@@ -63,10 +63,10 @@ fn _loop_solver_interactive(
     return _loop_solver_interactive(solver, guesses);
 }
 
-fn run_solver_interactive(be_cheaty: bool) {
+fn run_solver_interactive(hard_mode: bool, be_cheaty: bool) {
     println!("Enter input in format like bygbb\nWhere b is blank (or black), y is yellow, and g is green\n");
     println!("Creating intial WordleSolver, please wait\n");
-    _loop_solver_interactive(WordleSolver::create(be_cheaty), vec![]);
+    _loop_solver_interactive(WordleSolver::create(hard_mode, be_cheaty), vec![]);
 }
 
 fn update_timer(start: Instant, current: usize, total: usize, avg: f64) {
@@ -82,7 +82,7 @@ fn update_timer(start: Instant, current: usize, total: usize, avg: f64) {
     )
 }
 
-fn test_perf(be_cheaty: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
+fn test_perf(hard_mode: bool, be_cheaty: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
 
@@ -111,7 +111,7 @@ fn test_perf(be_cheaty: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
         let s = ms.clone();
         let g = guesses.clone();
         std::thread::spawn(move || {
-            let solver = WordleSolver::create_with_guesses(be_cheaty, g);
+            let solver = WordleSolver::create_with_guesses(hard_mode, be_cheaty, g);
             while s.send(solver.clone()).is_ok() {
                 continue;
             }
@@ -156,9 +156,9 @@ fn test_perf(be_cheaty: bool, guesses: Vec<usize>) -> Vec<Vec<String>> {
     results
 }
 
-fn run_perf_test(be_cheaty: bool, guesses: Option<Vec<usize>>) {
+fn run_perf_test(hard_mode: bool, be_cheaty: bool, guesses: Option<Vec<usize>>) {
     let now = Instant::now();
-    let results = test_perf(be_cheaty, guesses.unwrap_or_default());
+    let results = test_perf(hard_mode, be_cheaty, guesses.unwrap_or_default());
     println!(
         "\n{}",
         results
@@ -174,12 +174,15 @@ fn run_perf_test(be_cheaty: bool, guesses: Option<Vec<usize>>) {
 fn main() {
     let mut be_cheaty = false;
     let mut is_target = false;
+    let mut hard_mode = false;
     let mut target = None;
     let mut f: String = String::new();
     let mut guesses: Vec<usize> = Vec::new();
     for arg in std::env::args() {
         if arg == "--be-cheaty" {
             be_cheaty = true
+        } else if arg =="--hard" {
+            hard_mode = true
         } else if arg == "--target" {
             is_target = true;
             f = arg
@@ -192,15 +195,15 @@ fn main() {
         }
     }
     match f.as_str() {
-        "--perf" => run_perf_test(be_cheaty, Some(guesses)),
+        "--perf" => run_perf_test(hard_mode, be_cheaty, Some(guesses)),
         "--target" => {
             for guess in
-                run_solver_with_target(be_cheaty, target.expect("--target required target string"))
+                run_solver_with_target(hard_mode, be_cheaty, target.expect("--target required target string"))
             {
                 println!("{}", guess);
             }
         }
-        "--help" => println!("--help, --interactive [default], --perf [forced_guesses ...]\nPass in the --be_cheaty flag to use a model that knows possible_answers answers"),
-        _ => run_solver_interactive(be_cheaty),
+        "--help" => println!("--help, --interactive [default], --perf [forced_guesses ...]\nPass in the --be_cheaty flag to use a model that knows possible_answers answers\n--hard limits guesses to words that could be the answer given past clues"),
+        _ => run_solver_interactive(hard_mode, be_cheaty),
     }
 }
